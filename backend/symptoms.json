@@ -1,0 +1,129 @@
+{
+  "organs": {
+    "heart": {
+      "id": "heart",
+      "name": "Heart"
+    },
+    "kidney": {
+      "id": "kidney",
+      "name": "Kidney"
+    },
+    "liver": {
+      "id": "liver",
+      "name": "Liver"
+    }
+  },
+  "symptoms": {
+    "heart": [
+      {
+        "id": "h1",
+        "name": "Diagonal Earlobe Crease (Frank's Sign)",
+        "description": "A diagonal crease running from the tragus to the outer edge of the earlobe at a 45° angle.",
+        "why": "Associated with poor circulation and atherosclerosis affecting small blood vessels.",
+        "severity": "high"
+      },
+      {
+        "id": "h2",
+        "name": "Arcus Senilis (Eye Ring)",
+        "description": "A white, gray, or blue arc or ring around the outer edge of the cornea.",
+        "why": "In people under 45, this ring may indicate high cholesterol linked to heart disease.",
+        "severity": "medium"
+      },
+      {
+        "id": "h3",
+        "name": "Xanthelasma (Eyelid Deposits)",
+        "description": "Yellowish, flat or slightly raised deposits on the upper or lower eyelids.",
+        "why": "These are cholesterol deposits under the skin, a risk marker for heart disease.",
+        "severity": "high"
+      },
+      {
+        "id": "h4",
+        "name": "Peripheral Edema (Swollen Ankles)",
+        "description": "Abnormal swelling in the lower legs, ankles, or feet that leaves a pit when pressed.",
+        "why": "Can indicate heart failure where the heart is not pumping blood efficiently.",
+        "severity": "high"
+      },
+      {
+        "id": "h5",
+        "name": "Nail Clubbing",
+        "description": "Fingertips enlarge and nails curve downward, resembling an upside-down spoon.",
+        "why": "Associated with chronic low oxygen levels, which can indicate heart or lung disease.",
+        "severity": "high"
+      }
+    ],
+    "kidney": [
+      {
+        "id": "k1",
+        "name": "Periorbital Edema (Puffy Eyes)",
+        "description": "Swelling and puffiness around the eyes, especially noticeable in the morning.",
+        "why": "Kidneys failing to filter protein cause fluid and protein to leak, leading to facial swelling.",
+        "severity": "high"
+      },
+      {
+        "id": "k2",
+        "name": "Half-and-Half Nails (Lindsay's Nails)",
+        "description": "The lower half of the nail appears white and the upper half appears brown or pink.",
+        "why": "A classic sign of chronic kidney disease affecting nail pigmentation.",
+        "severity": "high"
+      },
+      {
+        "id": "k3",
+        "name": "Pale Conjunctiva",
+        "description": "The inner lining of the lower eyelid is pale pink or white instead of healthy red.",
+        "why": "Kidney disease causes anemia, reducing red blood cells, making tissues appear pale.",
+        "severity": "medium"
+      },
+      {
+        "id": "k4",
+        "name": "Severe Ankle Edema",
+        "description": "Significant bilateral swelling of the ankles and lower legs that is worse by evening.",
+        "why": "Kidneys failing to regulate fluid cause sodium and water retention leading to edema.",
+        "severity": "high"
+      },
+      {
+        "id": "k5",
+        "name": "Uremic Frost",
+        "description": "White or yellowish crystal deposits visible on the skin surface, especially forehead.",
+        "why": "In severe kidney failure, urea crystallizes on the skin as the body tries to excrete waste.",
+        "severity": "critical"
+      }
+    ],
+    "liver": [
+      {
+        "id": "l1",
+        "name": "Jaundice (Yellow Eyes/Skin)",
+        "description": "Yellowing of the skin and the whites of the eyes (scleral icterus).",
+        "why": "A damaged liver cannot process bilirubin, causing it to build up and turn tissue yellow.",
+        "severity": "critical"
+      },
+      {
+        "id": "l2",
+        "name": "Palmar Erythema (Red Palms)",
+        "description": "Redness of the palms, particularly the outer edges (thenar and hypothenar areas).",
+        "why": "Liver disease causes hormonal changes that dilate blood vessels in the palms.",
+        "severity": "medium"
+      },
+      {
+        "id": "l3",
+        "name": "Spider Angiomas",
+        "description": "Small spider-like blood vessel formations visible on the face, chest, or hands.",
+        "why": "Excess estrogen from liver dysfunction causes small blood vessel abnormalities.",
+        "severity": "medium"
+      },
+      {
+        "id": "l4",
+        "name": "Terry's Nails (White Nails)",
+        "description": "Nails appear mostly white with only a narrow pink or brown band at the tip.",
+        "why": "Associated with cirrhosis and other severe liver conditions affecting nail vascularity.",
+        "severity": "high"
+      },
+      {
+        "id": "l5",
+        "name": "Hepatic Fetor (Distinctive Breath)",
+        "description": "A distinctive musty, sweet, or fecal smell on the breath (cannot be photographed).",
+        "why": "Liver failure causes toxic compounds like dimethyl sulfide to be excreted through the lungs.",
+        "severity": "critical"
+      }
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "TriOrgan",
+    "slug": "TriOrgan",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#7C3AED"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.odekejp100.TriOrgan",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#7C3AED"
+      },
+      "package": "com.odekejp100.TriOrgan"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "93486ab2-ef98-489c-ba3e-a631ab211a3b"
+      }
+    },
+    "owner": "odekejp100",
+    "newArchEnabled": true
+  }
+}
