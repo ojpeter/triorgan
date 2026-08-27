@@ -243,4 +243,22 @@ describe('startup splash', () => {
     expect(appJson.expo.splash.image).toBeUndefined();
     expect(Object.keys(appJson.expo.splash)).toEqual(['backgroundColor']);
   });
+
+  // SDK 54 builds the native splash from the expo-splash-screen plugin, not
+  // from the legacy expo.splash key. If the plugin is missing, a stale splash
+  // survives config changes — which is exactly what happened.
+  it('configures the native splash through the expo-splash-screen plugin', () => {
+    const appJson = require('../app.json');
+    const buildConfig = require('../app.config.js')({ config: appJson.expo });
+
+    const plugin = buildConfig.plugins.find(
+      (p) => Array.isArray(p) && p[0] === 'expo-splash-screen'
+    );
+
+    expect(plugin).toBeDefined();
+    expect(plugin[1].image).toBeUndefined();
+    expect(plugin[1].backgroundColor.toLowerCase()).toBe(
+      appJson.expo.splash.backgroundColor.toLowerCase()
+    );
+  });
 });

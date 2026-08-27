@@ -53,6 +53,23 @@ module.exports = ({ config }) => ({
   plugins: [
     ...(config.plugins ?? []),
     [
+      // SDK 54 generates the native splash from this plugin. The legacy
+      // `expo.splash` key in app.json is the older path, and leaving only that
+      // set is how a stale splash survives a config change.
+      //
+      // No `image` on purpose: the animated launch screen (src/components/
+      // AppSplash.js) assembles the mark itself, so a static one here would
+      // show the finished artwork before the animation rebuilds it. The colour
+      // is read from app.json so the two cannot drift.
+      'expo-splash-screen',
+      {
+        backgroundColor: config.splash?.backgroundColor ?? '#5B21B6',
+        // Keep the launch screen dark-mode-stable; the gradient is the same
+        // either way.
+        dark: { backgroundColor: config.splash?.backgroundColor ?? '#5B21B6' },
+      },
+    ],
+    [
       // Android blocks cleartext HTTP by default from API 28 up, and iOS ATS
       // blocks it too. This opens it for development only; release builds are
       // HTTPS-only, which is also a Play Store expectation.
