@@ -1,6 +1,7 @@
 import 'react-native-url-polyfill/auto';
-import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { View, StyleSheet } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -11,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { WalletProvider } from './src/context/WalletContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
+import BrandSplash from './src/components/BrandSplash';
 import { hasOnboarded } from './src/services/authService';
 import { COLORS } from './src/constants/colors';
 
@@ -28,6 +30,11 @@ import WalletScreen from './src/screens/WalletScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
+
+// Keep the native splash up until the first real screen is ready to draw.
+// Without this there is a blank frame between the native splash tearing down
+// and React mounting. Failure here is not worth crashing over.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 const stackOptions = { headerShown: false, animation: 'slide_from_right' };
 
@@ -141,40 +148,43 @@ function RootNavigator() {
     };
   }, []);
 
-  if (loading || onboarded === null) {
-    return (
-      <View style={styles.splash}>
-        <ActivityIndicator
-          size="large"
-          color={COLORS.primary}
-          accessibilityLabel="Loading TriaCare"
-        />
-      </View>
-    );
+  const isReady = !loading && onboarded !== null;
+
+  // Hand off from the native splash only once the first real screen has laid
+  // out. Hiding it any earlier leaves a blank frame; the JS splash uses the
+  // same purple, so the seam is invisible either way.
+  const onLayout = useCallback(() => {
+    if (isReady) SplashScreen.hideAsync().catch(() => {});
+  }, [isReady]);
+
+  if (!isReady) {
+    return <BrandSplash />;
   }
 
   // Auth state drives which stack exists, so screens never need to navigate
   // manually after signing in or out — that raced this swap and could leave a
   // signed-out user looking at a signed-in screen.
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-      {user ? (
-        <Stack.Screen name="MainApp" component={MainApp} />
-      ) : (
-        <>
-          {!onboarded && <Stack.Screen name="Onboarding" component={OnboardingScreen} />}
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Register" component={RegisterScreen} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          {/* Guests may browse health education without an account. */}
-          <Stack.Screen
-            name="MainApp"
-            component={MainApp}
-            options={{ animation: 'slide_from_right' }}
-          />
-        </>
-      )}
-    </Stack.Navigator>
+    <View style={styles.root} onLayout={onLayout}>
+      <Stack.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+        {user ? (
+          <Stack.Screen name="MainApp" component={MainApp} />
+        ) : (
+          <>
+            {!onboarded && <Stack.Screen name="Onboarding" component={OnboardingScreen} />}
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+            {/* Guests may browse health education without an account. */}
+            <Stack.Screen
+              name="MainApp"
+              component={MainApp}
+              options={{ animation: 'slide_from_right' }}
+            />
+          </>
+        )}
+      </Stack.Navigator>
+    </View>
   );
 }
 
@@ -196,10 +206,5 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  splash: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  root: { flex: 1, backgroundColor: COLORS.background },
 });

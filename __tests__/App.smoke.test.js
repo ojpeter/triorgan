@@ -141,3 +141,34 @@ describe('resilience', () => {
     await waitFor(() => expect(screen.getByText('Welcome back 👋')).toBeTruthy());
   });
 });
+
+describe('startup splash', () => {
+  it('shows the branded splash while the session is still restoring', async () => {
+    // Never resolves, so the app stays in its loading state.
+    mockHasOnboarded.mockReturnValue(new Promise(() => {}));
+    mockGetStoredUser.mockReturnValue(new Promise(() => {}));
+
+    render(<App />);
+
+    expect(screen.getByLabelText('TriaCare is starting')).toBeTruthy();
+    expect(screen.getByText('TriaCare')).toBeTruthy();
+  });
+
+  it('leaves the splash once startup finishes', async () => {
+    mockHasOnboarded.mockResolvedValue(true);
+    mockGetStoredUser.mockResolvedValue(null);
+
+    await renderApp();
+
+    await waitFor(() => expect(screen.queryByLabelText('TriaCare is starting')).toBeNull());
+  });
+
+  // The native splash is a flat colour and the JS splash is a gradient. If the
+  // two stop matching, the handoff flashes — which is the defect this replaced.
+  it('keeps the native splash colour in step with the JS gradient', () => {
+    const appJson = require('../app.json');
+    const { SPLASH_MID } = require('../src/components/BrandSplash');
+
+    expect(appJson.expo.splash.backgroundColor.toLowerCase()).toBe(SPLASH_MID.toLowerCase());
+  });
+});
