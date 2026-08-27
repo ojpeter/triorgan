@@ -5,6 +5,7 @@
 // Navigation major upgrade is most likely to break.
 
 import React from 'react';
+import { AccessibilityInfo } from 'react-native';
 import { render, screen, waitFor, act } from '@testing-library/react-native';
 
 // Spread the real module so the context objects stay intact —
@@ -143,15 +144,43 @@ describe('resilience', () => {
 });
 
 describe('startup splash', () => {
-  it('shows the branded splash while the session is still restoring', async () => {
-    // Never resolves, so the app stays in its loading state.
+  /** Holds the app in its loading state indefinitely. */
+  const stallStartup = () => {
     mockHasOnboarded.mockReturnValue(new Promise(() => {}));
     mockGetStoredUser.mockReturnValue(new Promise(() => {}));
+  };
+
+  it('shows the branded splash while the session is still restoring', async () => {
+    stallStartup();
 
     render(<App />);
+    // The splash reads the reduce-motion preference before its first real
+    // paint, so let that microtask settle. It renders a SPLASH_MID frame in the
+    // meantime, which is the same colour as the native splash — invisible.
+    await act(async () => {});
 
     expect(screen.getByLabelText('TriaCare is starting')).toBeTruthy();
     expect(screen.getByText('TriaCare')).toBeTruthy();
+    expect(screen.getByText('Health Early Warning System')).toBeTruthy();
+  });
+
+  // Motion sensitivity is a real accessibility need, and a health app is the
+  // last place to ignore the system setting.
+  it('renders without animation when reduce motion is on', async () => {
+    const spy = jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+    stallStartup();
+
+    render(<App />);
+    await act(async () => {});
+
+    expect(spy).toHaveBeenCalled();
+    // Same content, just composed rather than animated in.
+    expect(screen.getByLabelText('TriaCare is starting')).toBeTruthy();
+    expect(screen.getByText('TriaCare')).toBeTruthy();
+
+    spy.mockRestore();
   });
 
   it('leaves the splash once startup finishes', async () => {
@@ -167,7 +196,7 @@ describe('startup splash', () => {
   // two stop matching, the handoff flashes — which is the defect this replaced.
   it('keeps the native splash colour in step with the JS gradient', () => {
     const appJson = require('../app.json');
-    const { SPLASH_MID } = require('../src/components/BrandSplash');
+    const { SPLASH_MID } = require('../src/components/AppSplash');
 
     expect(appJson.expo.splash.backgroundColor.toLowerCase()).toBe(SPLASH_MID.toLowerCase());
   });

@@ -12,7 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { WalletProvider } from './src/context/WalletContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
-import BrandSplash from './src/components/BrandSplash';
+import AppSplash from './src/components/AppSplash';
 import { hasOnboarded } from './src/services/authService';
 import { COLORS } from './src/constants/colors';
 
@@ -158,7 +158,7 @@ function RootNavigator() {
   }, [isReady]);
 
   if (!isReady) {
-    return <BrandSplash />;
+    return <AppSplash />;
   }
 
   // Auth state drives which stack exists, so screens never need to navigate
