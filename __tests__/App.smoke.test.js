@@ -73,13 +73,31 @@ import App from '../App';
 
 const USER = { id: 'u1', fullName: 'Amara Nakato', email: 'a@example.com', role: 'patient' };
 
+// App.js holds the launch screen for MIN_SPLASH_MS so its animation can land.
+// Fake timers let the tests skip that without waiting in real time.
+const MIN_SPLASH_MS = 1700;
+
 beforeEach(() => {
   jest.clearAllMocks();
+  jest.useFakeTimers();
 });
 
+afterEach(() => {
+  jest.useRealTimers();
+});
+
+/** Renders, settles the startup promises, and skips the brand-moment hold. */
 async function renderApp() {
   const utils = render(<App />);
-  // Let the session/onboarding restore effects settle.
+  await act(async () => {
+    jest.advanceTimersByTime(MIN_SPLASH_MS + 100);
+  });
+  return utils;
+}
+
+/** Renders and settles promises only — the splash is still on screen. */
+async function renderDuringSplash() {
+  const utils = render(<App />);
   await act(async () => {});
   return utils;
 }
@@ -153,11 +171,10 @@ describe('startup splash', () => {
   it('shows the branded splash while the session is still restoring', async () => {
     stallStartup();
 
-    render(<App />);
     // The splash reads the reduce-motion preference before its first real
     // paint, so let that microtask settle. It renders a SPLASH_MID frame in the
     // meantime, which is the same colour as the native splash — invisible.
-    await act(async () => {});
+    await renderDuringSplash();
 
     expect(screen.getByLabelText('TriaCare is starting')).toBeTruthy();
     expect(screen.getByText('TriaCare')).toBeTruthy();
@@ -172,8 +189,7 @@ describe('startup splash', () => {
       .mockResolvedValue(true);
     stallStartup();
 
-    render(<App />);
-    await act(async () => {});
+    await renderDuringSplash();
 
     expect(spy).toHaveBeenCalled();
     // Same content, just composed rather than animated in.
@@ -183,13 +199,30 @@ describe('startup splash', () => {
     spy.mockRestore();
   });
 
-  it('leaves the splash once startup finishes', async () => {
+  // Startup is ~150ms of AsyncStorage but the animation runs ~1.6s. Without the
+  // hold, the splash unmounts before the three organs meet and the cut reads as
+  // a glitch.
+  it('holds the splash through the brand moment even when startup is instant', async () => {
+    mockHasOnboarded.mockResolvedValue(true);
+    mockGetStoredUser.mockResolvedValue(null);
+
+    render(<App />);
+    await act(async () => {
+      jest.advanceTimersByTime(400);
+    });
+
+    expect(screen.getByLabelText('TriaCare is starting')).toBeTruthy();
+    expect(screen.queryByText('Welcome back 👋')).toBeNull();
+  });
+
+  it('leaves the splash once the hold has elapsed', async () => {
     mockHasOnboarded.mockResolvedValue(true);
     mockGetStoredUser.mockResolvedValue(null);
 
     await renderApp();
 
     await waitFor(() => expect(screen.queryByLabelText('TriaCare is starting')).toBeNull());
+    expect(screen.getByText('Welcome back 👋')).toBeTruthy();
   });
 
   // The native splash is a flat colour and the JS splash is a gradient. If the

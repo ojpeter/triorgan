@@ -1,25 +1,29 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// TriaCare launch screen — the triad assembling.
+// TriaCare launch screen — the three organs arrive, meet, and settle.
 //
-// The app icon is the brand: three organs (heart, kidney, liver) held in a
-// triangle inside concentric rings. "Tria" is three. So the launch screen does
-// not invent a mark — it builds the one you already have, then hands off to a
-// static icon that matches what just finished animating.
+// Choreography:
+//   1. Heart, kidney and liver bounce in from off-screen, each along its own
+//      axis (heart from above, kidney from the lower left, liver from the
+//      lower right) so nothing crosses paths.
+//   2. They huddle tight at the centre. A soft ring flashes on impact.
+//   3. They relax outward into the triad from the app icon, the connecting
+//      triangle draws, the rings bloom, and the wordmark resolves.
 //
-// Sequence: rings scan outward → the three nodes drop in, in organ order →
-// the triangle draws between them → the wordmark resolves.
+// Each node travels through three keyframes on a single Animated.Value — 0 is
+// off-screen, 1 is the huddle, 2 is the resting triad — so the inbound bounce
+// and the outward relax are one continuous motion rather than two animations
+// fighting over the same transform.
 //
-// Colour carries the meaning here. Each node uses that organ's colour from
-// src/constants/colors.js, the same colours the organ cards and result screens
-// use, so the palette is learned in the first two seconds of the app's life.
+// Colour does the explaining: each node carries that organ's colour from
+// src/constants/colors.js, the same red/teal/amber the organ cards and result
+// screens use.
 //
-// The gradient matches the icon's own purple so the native splash (a flat
-// SPLASH_MID with the icon on it) and this screen are continuous. A test fails
-// if app.json and SPLASH_MID drift apart.
+// The gradient is sampled from assets/splash-icon.png, and app.json's flat
+// splash colour equals SPLASH_MID, so the native splash and this screen are
+// continuous. A test fails if those drift apart.
 //
-// Honours the system reduce-motion setting: the assembled frame renders at
-// once. Motion sensitivity is a real accessibility need and a health app is a
-// poor place to ignore it.
+// Honours the system reduce-motion setting: the settled frame renders at once.
+// Motion sensitivity is a real accessibility need and this is a health app.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -41,9 +45,8 @@ export const SPLASH_MID = '#5B21B6';
 /** Sampled from assets/splash-icon.png so the two read as one artwork. */
 const GRADIENT = ['#7E22CE', SPLASH_MID, '#4C1D95'];
 
-// Organ glyphs, drawn in a 24×24 box and centred on each node.
-// Simplified silhouettes: at node size these read as shape and colour, and a
-// more literal anatomical drawing would only turn to mud.
+// Organ glyphs in a 24×24 box. Simplified silhouettes — at node size these read
+// as shape and colour, and a literal anatomical drawing would turn to mud.
 const GLYPHS = {
   heart: {
     color: '#DC2626',
@@ -59,47 +62,63 @@ const GLYPHS = {
   },
 };
 
-// Node order is the order the app lists organs in, so the animation teaches the
-// same sequence the Home screen uses.
+// Angles match the app icon's arrangement. Each organ enters from beyond its
+// own resting position, so the three never cross.
 const NODES = [
-  { key: 'heart', label: 'Heart', angle: -90 },
-  { key: 'kidney', label: 'Kidney', angle: 150 },
-  { key: 'liver', label: 'Liver', angle: 30 },
+  { key: 'heart', angle: -90 },
+  { key: 'kidney', angle: 150 },
+  { key: 'liver', angle: 30 },
 ];
 
-const polar = (angleDeg, radius, cx, cy) => {
+/** How tightly they cluster when they meet, as a fraction of the resting orbit. */
+const HUDDLE = 0.26;
+/** How far off-screen they start, as a multiple of the mark's size. */
+const ENTRY = 1.5;
+
+const polar = (angleDeg, radius) => {
   const rad = (angleDeg * Math.PI) / 180;
-  return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
+  return { x: radius * Math.cos(rad), y: radius * Math.sin(rad) };
 };
 
 export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
   const { width } = useWindowDimensions();
   const [reduceMotion, setReduceMotion] = useState(null);
 
-  // The mark is the hero: big enough to be the subject, not an app-icon
-  // floating in space.
   const size = Math.min(Math.max(width * 0.62, 220), 320);
-  const cx = size / 2;
-  const cy = size / 2;
+  const centre = size / 2;
   const orbit = size * 0.23;
   const nodeR = size * 0.115;
 
-  const positions = useMemo(
-    () => NODES.map((n) => ({ ...n, ...polar(n.angle, orbit, cx, cy) })),
-    [orbit, cx, cy]
+  // Three keyframes per node: off-screen → huddle → resting triad.
+  const tracks = useMemo(
+    () =>
+      NODES.map((node) => ({
+        ...node,
+        from: polar(node.angle, size * ENTRY),
+        meet: polar(node.angle, orbit * HUDDLE),
+        rest: polar(node.angle, orbit),
+      })),
+    [size, orbit]
   );
 
   // ── Animated values ────────────────────────────────────────────────────────
+  // One value per node, travelling 0 → 1 → 2.
+  const travel = useRef(NODES.map(() => new Animated.Value(0))).current;
+  const impact = useRef(new Animated.Value(0)).current; // flash when they meet
   const rings = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
-  const nodes = useRef(NODES.map(() => new Animated.Value(0))).current;
-  const web = useRef(new Animated.Value(0)).current;
+  const web = useRef(new Animated.Value(0)).current; // connecting triangle
   const word = useRef(new Animated.Value(0)).current;
-  const scan = useRef(new Animated.Value(0)).current;
+  const breathe = useRef(new Animated.Value(0)).current; // resting pulse
 
   useEffect(() => {
     let alive = true;
-    AccessibilityInfo.isReduceMotionEnabled()
-      .then((on) => alive && setReduceMotion(on))
+    // Wrapped in Promise.resolve rather than calling .then directly: this API
+    // is absent on some platforms and returns undefined under certain test
+    // doubles, and the launch screen must never be the thing that takes the
+    // whole app down. Anything unexpected falls back to "motion allowed".
+    Promise.resolve()
+      .then(() => AccessibilityInfo.isReduceMotionEnabled?.())
+      .then((on) => alive && setReduceMotion(on === true))
       .catch(() => alive && setReduceMotion(false));
     return () => {
       alive = false;
@@ -110,83 +129,128 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
     if (reduceMotion === null) return undefined;
 
     if (reduceMotion) {
-      [...rings, ...nodes, web, word].forEach((v) => v.setValue(1));
+      travel.forEach((v) => v.setValue(2));
+      [...rings, web, word].forEach((v) => v.setValue(1));
       return undefined;
     }
 
-    // Rings sweep outward first — the "scan" that finds the organs.
-    const ringIn = Animated.stagger(
-      110,
-      rings.map((v) =>
+    // 1 — bounce in. Easing.bounce settles with a couple of real rebounds, so
+    // the arrival reads as weight rather than a slide.
+    const arrive = Animated.stagger(
+      60,
+      travel.map((v) =>
         Animated.timing(v, {
           toValue: 1,
           duration: 620,
-          easing: Easing.bezier(0.16, 1, 0.3, 1),
+          easing: Easing.bounce,
           useNativeDriver: true,
         })
       )
     );
 
-    // Then each organ lands, in the app's own organ order.
-    const nodesIn = Animated.stagger(
-      130,
-      nodes.map((v) =>
-        Animated.timing(v, {
-          toValue: 1,
-          duration: 520,
-          easing: Easing.bezier(0.16, 1, 0.3, 1),
-          useNativeDriver: true,
-        })
-      )
-    );
-
-    const webIn = Animated.timing(web, {
-      toValue: 1,
-      duration: 460,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    });
-
-    const wordIn = Animated.timing(word, {
-      toValue: 1,
-      duration: 520,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    });
-
-    const intro = Animated.sequence([
-      ringIn,
-      Animated.parallel([nodesIn, Animated.sequence([Animated.delay(260), webIn])]),
-      wordIn,
+    // 2 — the meeting registers.
+    const flash = Animated.sequence([
+      Animated.timing(impact, {
+        toValue: 1,
+        duration: 120,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.timing(impact, {
+        toValue: 0,
+        duration: 460,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
     ]);
 
-    // A slow continuous scan ring, so a slow start still feels alive.
-    const scanLoop = Animated.loop(
+    // 3 — relax apart. A gentle overshoot, so they ease into place and stop
+    // rather than snapping.
+    const relax = Animated.parallel([
+      ...travel.map((v) =>
+        Animated.timing(v, {
+          toValue: 2,
+          duration: 640,
+          easing: Easing.out(Easing.back(1.4)),
+          useNativeDriver: true,
+        })
+      ),
+      Animated.stagger(
+        70,
+        rings.map((v) =>
+          Animated.timing(v, {
+            toValue: 1,
+            duration: 520,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          })
+        )
+      ),
       Animated.sequence([
-        Animated.delay(1500),
-        Animated.timing(scan, {
+        Animated.delay(180),
+        Animated.timing(web, {
           toValue: 1,
-          duration: 2200,
-          easing: Easing.out(Easing.quad),
+          duration: 420,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.timing(scan, { toValue: 0, duration: 0, useNativeDriver: true }),
+      ]),
+      // The wordmark overlaps the relax rather than queueing behind it —
+      // sequential stages are what pushed this past three seconds.
+      Animated.sequence([
+        Animated.delay(300),
+        Animated.timing(word, {
+          toValue: 1,
+          duration: 440,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]);
+
+    const intro = Animated.sequence([
+      arrive,
+      Animated.parallel([flash, Animated.sequence([Animated.delay(150), relax])]),
+    ]);
+
+    // Once settled, a slow breath keeps the screen alive on a long start.
+    const breatheLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(breathe, {
+          toValue: 1,
+          duration: 1800,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(breathe, {
+          toValue: 0,
+          duration: 1800,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
       ])
     );
 
-    intro.start();
-    scanLoop.start();
+    intro.start(({ finished }) => {
+      if (finished) breatheLoop.start();
+    });
+
     return () => {
       intro.stop();
-      scanLoop.stop();
+      breatheLoop.stop();
     };
-  }, [reduceMotion, rings, nodes, web, word, scan]);
+  }, [reduceMotion, travel, impact, rings, web, word, breathe]);
 
   // Hold a frame of the native splash's own colour while the motion preference
-  // is read — one tick, and indistinguishable from what is already on screen.
+  // is read — one tick, indistinguishable from what is already on screen.
   if (reduceMotion === null) {
     return <View style={[styles.container, { backgroundColor: SPLASH_MID }]} />;
   }
+
+  const breatheScale = breathe.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 1.035],
+  });
 
   return (
     <LinearGradient
@@ -201,37 +265,42 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
       accessibilityLiveRegion="polite"
     >
       <View style={styles.stage}>
-        <View style={{ width: size, height: size }}>
-          {/* Continuous outward scan, behind the mark. */}
+        <Animated.View
+          style={[
+            { width: size, height: size },
+            !reduceMotion && { transform: [{ scale: breatheScale }] },
+          ]}
+        >
+          {/* Impact flash at the moment they meet. */}
           {!reduceMotion && (
             <Animated.View
               style={[
                 StyleSheet.absoluteFill,
                 {
-                  opacity: scan.interpolate({
-                    inputRange: [0, 0.1, 1],
-                    outputRange: [0, 0.22, 0],
+                  opacity: impact.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 0.5],
                   }),
                   transform: [
-                    { scale: scan.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) },
+                    { scale: impact.interpolate({ inputRange: [0, 1], outputRange: [0.15, 1.1] }) },
                   ],
                 },
               ]}
             >
               <Svg width={size} height={size}>
                 <Circle
-                  cx={cx}
-                  cy={cy}
-                  r={size * 0.44}
+                  cx={centre}
+                  cy={centre}
+                  r={size * 0.3}
                   stroke="#FFFFFF"
-                  strokeWidth={1.5}
+                  strokeWidth={2}
                   fill="none"
                 />
               </Svg>
             </Animated.View>
           )}
 
-          {/* Concentric rings — straight from the icon. */}
+          {/* Concentric rings, straight from the app icon. */}
           {rings.map((value, i) => (
             <Animated.View
               key={`ring-${i}`}
@@ -243,15 +312,15 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
                     outputRange: [0, 0.34 - i * 0.07],
                   }),
                   transform: [
-                    { scale: value.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] }) },
+                    { scale: value.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1] }) },
                   ],
                 },
               ]}
             >
               <Svg width={size} height={size}>
                 <Circle
-                  cx={cx}
-                  cy={cy}
+                  cx={centre}
+                  cy={centre}
                   r={size * (0.44 - i * 0.075)}
                   stroke="#FFFFFF"
                   strokeWidth={1.5}
@@ -261,18 +330,18 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
             </Animated.View>
           ))}
 
-          {/* The triangle that binds the three. */}
+          {/* The triangle binding the three, drawn once they have settled. */}
           <Animated.View style={[StyleSheet.absoluteFill, { opacity: web }]}>
             <Svg width={size} height={size}>
-              {positions.map((from, i) => {
-                const to = positions[(i + 1) % positions.length];
+              {tracks.map((from, i) => {
+                const to = tracks[(i + 1) % tracks.length];
                 return (
                   <Line
                     key={`edge-${from.key}`}
-                    x1={from.x}
-                    y1={from.y}
-                    x2={to.x}
-                    y2={to.y}
+                    x1={centre + from.rest.x}
+                    y1={centre + from.rest.y}
+                    x2={centre + to.rest.x}
+                    y2={centre + to.rest.y}
                     stroke="#FFFFFF"
                     strokeOpacity={0.55}
                     strokeWidth={1.25}
@@ -283,9 +352,9 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
           </Animated.View>
 
           {/* The organs. */}
-          {positions.map((node, i) => {
+          {tracks.map((node, i) => {
             const glyph = GLYPHS[node.key];
-            const value = nodes[i];
+            const t = travel[i];
             return (
               <Animated.View
                 key={node.key}
@@ -295,11 +364,28 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
                     width: nodeR * 2,
                     height: nodeR * 2,
                     borderRadius: nodeR,
-                    left: node.x - nodeR,
-                    top: node.y - nodeR,
-                    opacity: value,
+                    left: centre - nodeR,
+                    top: centre - nodeR,
                     transform: [
-                      { scale: value.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) },
+                      {
+                        translateX: t.interpolate({
+                          inputRange: [0, 1, 2],
+                          outputRange: [node.from.x, node.meet.x, node.rest.x],
+                        }),
+                      },
+                      {
+                        translateY: t.interpolate({
+                          inputRange: [0, 1, 2],
+                          outputRange: [node.from.y, node.meet.y, node.rest.y],
+                        }),
+                      },
+                      {
+                        // Slightly compressed in the huddle, full size at rest.
+                        scale: t.interpolate({
+                          inputRange: [0, 1, 2],
+                          outputRange: [0.75, 0.88, 1],
+                        }),
+                      },
                     ],
                   },
                 ]}
@@ -310,7 +396,7 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
               </Animated.View>
             );
           })}
-        </View>
+        </Animated.View>
 
         <Animated.Text
           style={[
@@ -328,7 +414,10 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
         </Animated.Text>
 
         <Animated.Text
-          style={[styles.tagline, { opacity: word.interpolate({ inputRange: [0, 1], outputRange: [0, 0.82] }) }]}
+          style={[
+            styles.tagline,
+            { opacity: word.interpolate({ inputRange: [0, 1], outputRange: [0, 0.82] }) },
+          ]}
           maxFontSizeMultiplier={1.35}
         >
           {tagline}
@@ -343,7 +432,7 @@ export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   stage: { alignItems: 'center' },
   node: {
     position: 'absolute',

@@ -36,6 +36,16 @@ const Stack = createNativeStackNavigator();
 // and React mounting. Failure here is not worth crashing over.
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// Restoring the session is two AsyncStorage reads — roughly 150ms — while the
+// splash animation runs for ~1.6s. Without a floor the splash unmounts before
+// the three organs even meet, so nobody ever sees it and the cut looks like a
+// glitch. This holds the launch screen just long enough to land.
+//
+// It is a deliberate delay on every cold start. Lower it if it starts to feel
+// like a tax; set it to 0 to show the splash only for as long as startup
+// actually takes.
+const MIN_SPLASH_MS = 1700;
+
 const stackOptions = { headerShown: false, animation: 'slide_from_right' };
 
 // ── Tab stacks ───────────────────────────────────────────────────────────────
@@ -138,6 +148,8 @@ function RootNavigator() {
   const { user, loading } = useAuth();
   const [onboarded, setOnboarded] = useState(null);
 
+  const [minElapsed, setMinElapsed] = useState(MIN_SPLASH_MS === 0);
+
   useEffect(() => {
     let alive = true;
     hasOnboarded().then((done) => {
@@ -148,7 +160,15 @@ function RootNavigator() {
     };
   }, []);
 
-  const isReady = !loading && onboarded !== null;
+  useEffect(() => {
+    if (MIN_SPLASH_MS === 0) return undefined;
+    const timer = setTimeout(() => setMinElapsed(true), MIN_SPLASH_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Both conditions: the data is loaded AND the launch animation has had time
+  // to finish. Startup work continues behind the splash either way.
+  const isReady = !loading && onboarded !== null && minElapsed;
 
   // Hand off from the native splash only once the first real screen has laid
   // out. Hiding it any earlier leaves a blank frame; the JS splash uses the
