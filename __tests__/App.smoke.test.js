@@ -233,4 +233,14 @@ describe('startup splash', () => {
 
     expect(appJson.expo.splash.backgroundColor.toLowerCase()).toBe(SPLASH_MID.toLowerCase());
   });
+
+  // The native splash used to show the assembled triad, and then AppSplash took
+  // it apart and rebuilt it — the finished mark, then its own construction.
+  // A flat fill keeps launch reading as one screen rather than two.
+  it('shows no artwork on the native splash', () => {
+    const appJson = require('../app.json');
+
+    expect(appJson.expo.splash.image).toBeUndefined();
+    expect(Object.keys(appJson.expo.splash)).toEqual(['backgroundColor']);
+  });
 });
