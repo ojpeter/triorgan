@@ -1,26 +1,25 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// TriaCare launch screen.
+// TriaCare launch screen — the triad assembling.
 //
-// Concept — "vital sign": an ECG trace draws itself across a glass tile, a
-// pulse ripples outward from it, then the wordmark resolves. The app screens
-// heart, kidney and liver, so a vital-sign reading is the honest metaphor
-// rather than a generic logo fade.
+// The app icon is the brand: three organs (heart, kidney, liver) held in a
+// triangle inside concentric rings. "Tria" is three. So the launch screen does
+// not invent a mark — it builds the one you already have, then hands off to a
+// static icon that matches what just finished animating.
 //
-// Two constraints shaped the implementation:
+// Sequence: rings scan outward → the three nodes drop in, in organ order →
+// the triangle draws between them → the wordmark resolves.
 //
-//   1. The gradient's midpoint is SPLASH_MID, which is also the native splash's
-//      backgroundColor in app.json. The tile sits where those meet, so the
-//      native-to-JS handoff has nothing visible to hand off. Keep them in sync —
-//      there is a test that fails if they drift.
+// Colour carries the meaning here. Each node uses that organ's colour from
+// src/constants/colors.js, the same colours the organ cards and result screens
+// use, so the palette is learned in the first two seconds of the app's life.
 //
-//   2. Everything that can run on the UI thread does (transform + opacity, via
-//      useNativeDriver). Only the trace's strokeDashoffset cannot, because it
-//      is not a transform; it is a single interpolation and runs while the JS
-//      thread is otherwise idle, waiting on two AsyncStorage reads.
+// The gradient matches the icon's own purple so the native splash (a flat
+// SPLASH_MID with the icon on it) and this screen are continuous. A test fails
+// if app.json and SPLASH_MID drift apart.
 //
-// Honours "reduce motion": that setting exists partly for people who get
-// vestibular symptoms from movement, and a health app should be the last one to
-// ignore it. When set, the composed final frame renders immediately.
+// Honours the system reduce-motion setting: the assembled frame renders at
+// once. Motion sensitivity is a real accessibility need and a health app is a
+// poor place to ignore it.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -34,38 +33,73 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Line, Path } from 'react-native-svg';
 
 /** Must equal expo.splash.backgroundColor in app.json. */
-export const SPLASH_MID = '#7C3AED';
+export const SPLASH_MID = '#5B21B6';
 
-const GRADIENT = ['#3B0764', SPLASH_MID, '#A78BFA'];
+/** Sampled from assets/splash-icon.png so the two read as one artwork. */
+const GRADIENT = ['#7E22CE', SPLASH_MID, '#4C1D95'];
 
-const AnimatedPath = Animated.createAnimatedComponent(Path);
+// Organ glyphs, drawn in a 24×24 box and centred on each node.
+// Simplified silhouettes: at node size these read as shape and colour, and a
+// more literal anatomical drawing would only turn to mud.
+const GLYPHS = {
+  heart: {
+    color: '#DC2626',
+    d: 'M12 20.5C12 20.5 4.5 15.8 4.5 10.6A4.1 4.1 0 0 1 12 8.2a4.1 4.1 0 0 1 7.5 2.4c0 5.2-7.5 9.9-7.5 9.9z',
+  },
+  kidney: {
+    color: '#0E7490',
+    d: 'M14.6 3.6c3.1 0 5.2 3 5.2 7.4 0 5.2-2.9 9.4-6.6 9.4-2.4 0-3.9-1.5-3.9-3.2 0-2.5 3-2.7 3-4.8 0-2.3-3.2-2.1-3.2-4.9 0-2.3 2.4-3.9 5.5-3.9z',
+  },
+  liver: {
+    color: '#B45309',
+    d: 'M4.2 8.1c3.9-2.9 9.7-3.8 14.6-1.9 1 .4 1.4 1.6 1 2.5l-2.9 6.8c-.6 1.4-2 2.3-3.5 2.3H8.1a3.9 3.9 0 0 1-3.9-3.9V8.1z',
+  },
+};
 
-// A single ECG cycle: flat baseline, P wave, the QRS spike, T wave, baseline.
-// Drawn in a 120×48 viewBox and scaled, so it stays crisp at any density.
-const TRACE = 'M2 24 H26 l5 -5 5 10 4 -22 6 39 5 -22 4 0 H74 l6 -9 5 9 H118';
-const TRACE_LENGTH = 260; // Comfortably longer than the path; over-dashing is invisible.
+// Node order is the order the app lists organs in, so the animation teaches the
+// same sequence the Home screen uses.
+const NODES = [
+  { key: 'heart', label: 'Heart', angle: -90 },
+  { key: 'kidney', label: 'Kidney', angle: 150 },
+  { key: 'liver', label: 'Liver', angle: 30 },
+];
 
-export default function AppSplash({ tagline = 'Health Early Warning System' }) {
+const polar = (angleDeg, radius, cx, cy) => {
+  const rad = (angleDeg * Math.PI) / 180;
+  return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
+};
+
+export default function AppSplash({ tagline = 'Heart · Kidney · Liver' }) {
   const { width } = useWindowDimensions();
   const [reduceMotion, setReduceMotion] = useState(null);
 
-  const tileSize = Math.min(Math.max(width * 0.30, 104), 148);
+  // The mark is the hero: big enough to be the subject, not an app-icon
+  // floating in space.
+  const size = Math.min(Math.max(width * 0.62, 220), 320);
+  const cx = size / 2;
+  const cy = size / 2;
+  const orbit = size * 0.23;
+  const nodeR = size * 0.115;
+
+  const positions = useMemo(
+    () => NODES.map((n) => ({ ...n, ...polar(n.angle, orbit, cx, cy) })),
+    [orbit, cx, cy]
+  );
 
   // ── Animated values ────────────────────────────────────────────────────────
-  const tile = useRef(new Animated.Value(0)).current; // scale + fade
-  const draw = useRef(new Animated.Value(0)).current; // strokeDashoffset (JS thread)
-  const word = useRef(new Animated.Value(0)).current; // wordmark
-  const sub = useRef(new Animated.Value(0)).current; // tagline
-  const ripple = useRef(new Animated.Value(0)).current; // expanding pulse ring
-  const bar = useRef(new Animated.Value(0)).current; // progress sweep
+  const rings = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
+  const nodes = useRef(NODES.map(() => new Animated.Value(0))).current;
+  const web = useRef(new Animated.Value(0)).current;
+  const word = useRef(new Animated.Value(0)).current;
+  const scan = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     let alive = true;
     AccessibilityInfo.isReduceMotionEnabled()
-      .then((enabled) => alive && setReduceMotion(enabled))
+      .then((on) => alive && setReduceMotion(on))
       .catch(() => alive && setReduceMotion(false));
     return () => {
       alive = false;
@@ -73,133 +107,83 @@ export default function AppSplash({ tagline = 'Health Early Warning System' }) {
   }, []);
 
   useEffect(() => {
-    // Wait until we know the motion preference, so we never start an animation
-    // we are about to be told not to play.
     if (reduceMotion === null) return undefined;
 
     if (reduceMotion) {
-      [tile, draw, word, sub].forEach((v) => v.setValue(1));
+      [...rings, ...nodes, web, word].forEach((v) => v.setValue(1));
       return undefined;
     }
 
-    const entrance = Animated.stagger(140, [
-      Animated.timing(tile, {
-        toValue: 1,
-        duration: 520,
-        easing: Easing.bezier(0.16, 1, 0.3, 1), // expo-out: settles, never bounces
-        useNativeDriver: true,
-      }),
-      Animated.timing(word, {
-        toValue: 1,
-        duration: 460,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(sub, {
-        toValue: 1,
-        duration: 460,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]);
-
-    // The trace draws slightly ahead of the wordmark, so the eye reads
-    // "reading taken → identity" rather than the two arriving together.
-    const trace = Animated.sequence([
-      Animated.delay(220),
-      Animated.timing(draw, {
-        toValue: 1,
-        duration: 900,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: false, // strokeDashoffset is not a transform
-      }),
-    ]);
-
-    const rippleLoop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(700),
-        Animated.timing(ripple, {
+    // Rings sweep outward first — the "scan" that finds the organs.
+    const ringIn = Animated.stagger(
+      110,
+      rings.map((v) =>
+        Animated.timing(v, {
           toValue: 1,
-          duration: 1900,
+          duration: 620,
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
+          useNativeDriver: true,
+        })
+      )
+    );
+
+    // Then each organ lands, in the app's own organ order.
+    const nodesIn = Animated.stagger(
+      130,
+      nodes.map((v) =>
+        Animated.timing(v, {
+          toValue: 1,
+          duration: 520,
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
+          useNativeDriver: true,
+        })
+      )
+    );
+
+    const webIn = Animated.timing(web, {
+      toValue: 1,
+      duration: 460,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+
+    const wordIn = Animated.timing(word, {
+      toValue: 1,
+      duration: 520,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    });
+
+    const intro = Animated.sequence([
+      ringIn,
+      Animated.parallel([nodesIn, Animated.sequence([Animated.delay(260), webIn])]),
+      wordIn,
+    ]);
+
+    // A slow continuous scan ring, so a slow start still feels alive.
+    const scanLoop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(1500),
+        Animated.timing(scan, {
+          toValue: 1,
+          duration: 2200,
           easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
-        Animated.timing(ripple, { toValue: 0, duration: 0, useNativeDriver: true }),
+        Animated.timing(scan, { toValue: 0, duration: 0, useNativeDriver: true }),
       ])
     );
 
-    const barLoop = Animated.loop(
-      Animated.timing(bar, {
-        toValue: 1,
-        duration: 1400,
-        easing: Easing.inOut(Easing.cubic),
-        useNativeDriver: true,
-      })
-    );
-
-    entrance.start();
-    trace.start();
-    rippleLoop.start();
-    barLoop.start();
-
+    intro.start();
+    scanLoop.start();
     return () => {
-      entrance.stop();
-      trace.stop();
-      rippleLoop.stop();
-      barLoop.stop();
+      intro.stop();
+      scanLoop.stop();
     };
-  }, [reduceMotion, tile, draw, word, sub, ripple, bar]);
+  }, [reduceMotion, rings, nodes, web, word, scan]);
 
-  // ── Derived styles ─────────────────────────────────────────────────────────
-  const tileStyle = useMemo(
-    () => ({
-      opacity: tile,
-      transform: [{ scale: tile.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1] }) }],
-    }),
-    [tile]
-  );
-
-  const wordStyle = useMemo(
-    () => ({
-      opacity: word,
-      transform: [{ translateY: word.interpolate({ inputRange: [0, 1], outputRange: [14, 0] }) }],
-    }),
-    [word]
-  );
-
-  const subStyle = useMemo(
-    () => ({
-      opacity: sub.interpolate({ inputRange: [0, 1], outputRange: [0, 0.85] }),
-      transform: [{ translateY: sub.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
-    }),
-    [sub]
-  );
-
-  const rippleStyle = useMemo(
-    () => ({
-      opacity: ripple.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.28, 0] }),
-      transform: [{ scale: ripple.interpolate({ inputRange: [0, 1], outputRange: [0.9, 2.1] }) }],
-    }),
-    [ripple]
-  );
-
-  const barStyle = useMemo(
-    () => ({
-      transform: [
-        { translateX: bar.interpolate({ inputRange: [0, 1], outputRange: [-72, 72] }) },
-        { scaleX: bar.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.4, 1, 0.4] }) },
-      ],
-    }),
-    [bar]
-  );
-
-  const dashOffset = draw.interpolate({
-    inputRange: [0, 1],
-    outputRange: [TRACE_LENGTH, 0],
-  });
-
-  // Hold the frame until the motion preference is known — one tick, and it
-  // avoids a flash of animation for someone who asked for none.
+  // Hold a frame of the native splash's own colour while the motion preference
+  // is read — one tick, and indistinguishable from what is already on screen.
   if (reduceMotion === null) {
     return <View style={[styles.container, { backgroundColor: SPLASH_MID }]} />;
   }
@@ -207,100 +191,148 @@ export default function AppSplash({ tagline = 'Health Early Warning System' }) {
   return (
     <LinearGradient
       colors={GRADIENT}
-      locations={[0, 0.55, 1]}
-      start={{ x: 0.15, y: 0 }}
-      end={{ x: 0.85, y: 1 }}
+      locations={[0, 0.5, 1]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
       style={styles.container}
-      // The screen speaks once, as a unit. Announcing a spinner and three
-      // decorative shapes separately is noise.
       accessible
       accessibilityRole="progressbar"
       accessibilityLabel="TriaCare is starting"
       accessibilityLiveRegion="polite"
     >
-      {/* Depth: a soft radial bloom behind the mark, and a cooler one low-left.
-          Rendered in SVG so they stay smooth instead of banding. */}
-      <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-        <Defs>
-          <RadialGradient id="bloom" cx="50%" cy="38%" r="55%">
-            <Stop offset="0%" stopColor="#C4B5FD" stopOpacity="0.30" />
-            <Stop offset="100%" stopColor="#C4B5FD" stopOpacity="0" />
-          </RadialGradient>
-          <RadialGradient id="cool" cx="12%" cy="88%" r="45%">
-            <Stop offset="0%" stopColor="#5EEAD4" stopOpacity="0.16" />
-            <Stop offset="100%" stopColor="#5EEAD4" stopOpacity="0" />
-          </RadialGradient>
-        </Defs>
-        <Circle cx="50%" cy="38%" r="55%" fill="url(#bloom)" />
-        <Circle cx="12%" cy="88%" r="45%" fill="url(#cool)" />
-      </Svg>
-
       <View style={styles.stage}>
-        <View style={styles.markArea}>
-          {/* Pulse propagating outward from the reading. */}
+        <View style={{ width: size, height: size }}>
+          {/* Continuous outward scan, behind the mark. */}
           {!reduceMotion && (
             <Animated.View
               style={[
-                styles.ripple,
-                { width: tileSize, height: tileSize, borderRadius: tileSize * 0.32 },
-                rippleStyle,
+                StyleSheet.absoluteFill,
+                {
+                  opacity: scan.interpolate({
+                    inputRange: [0, 0.1, 1],
+                    outputRange: [0, 0.22, 0],
+                  }),
+                  transform: [
+                    { scale: scan.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1.5] }) },
+                  ],
+                },
               ]}
-            />
+            >
+              <Svg width={size} height={size}>
+                <Circle
+                  cx={cx}
+                  cy={cy}
+                  r={size * 0.44}
+                  stroke="#FFFFFF"
+                  strokeWidth={1.5}
+                  fill="none"
+                />
+              </Svg>
+            </Animated.View>
           )}
 
-          <Animated.View
-            style={[
-              styles.tile,
-              { width: tileSize, height: tileSize, borderRadius: tileSize * 0.32 },
-              tileStyle,
-            ]}
-          >
-            <Svg width={tileSize * 0.66} height={tileSize * 0.3} viewBox="0 0 120 48">
-              {/* Ghost of the full trace, so the line has somewhere to arrive. */}
-              <Path
-                d={TRACE}
-                stroke="#FFFFFF"
-                strokeOpacity={0.22}
-                strokeWidth={4}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-              />
-              <AnimatedPath
-                d={TRACE}
-                stroke="#FFFFFF"
-                strokeWidth={4}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-                strokeDasharray={TRACE_LENGTH}
-                strokeDashoffset={reduceMotion ? 0 : dashOffset}
-              />
+          {/* Concentric rings — straight from the icon. */}
+          {rings.map((value, i) => (
+            <Animated.View
+              key={`ring-${i}`}
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  opacity: value.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 0.34 - i * 0.07],
+                  }),
+                  transform: [
+                    { scale: value.interpolate({ inputRange: [0, 1], outputRange: [0.72, 1] }) },
+                  ],
+                },
+              ]}
+            >
+              <Svg width={size} height={size}>
+                <Circle
+                  cx={cx}
+                  cy={cy}
+                  r={size * (0.44 - i * 0.075)}
+                  stroke="#FFFFFF"
+                  strokeWidth={1.5}
+                  fill="none"
+                />
+              </Svg>
+            </Animated.View>
+          ))}
+
+          {/* The triangle that binds the three. */}
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: web }]}>
+            <Svg width={size} height={size}>
+              {positions.map((from, i) => {
+                const to = positions[(i + 1) % positions.length];
+                return (
+                  <Line
+                    key={`edge-${from.key}`}
+                    x1={from.x}
+                    y1={from.y}
+                    x2={to.x}
+                    y2={to.y}
+                    stroke="#FFFFFF"
+                    strokeOpacity={0.55}
+                    strokeWidth={1.25}
+                  />
+                );
+              })}
             </Svg>
           </Animated.View>
+
+          {/* The organs. */}
+          {positions.map((node, i) => {
+            const glyph = GLYPHS[node.key];
+            const value = nodes[i];
+            return (
+              <Animated.View
+                key={node.key}
+                style={[
+                  styles.node,
+                  {
+                    width: nodeR * 2,
+                    height: nodeR * 2,
+                    borderRadius: nodeR,
+                    left: node.x - nodeR,
+                    top: node.y - nodeR,
+                    opacity: value,
+                    transform: [
+                      { scale: value.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) },
+                    ],
+                  },
+                ]}
+              >
+                <Svg width={nodeR * 1.25} height={nodeR * 1.25} viewBox="0 0 24 24">
+                  <Path d={glyph.d} fill={glyph.color} />
+                </Svg>
+              </Animated.View>
+            );
+          })}
         </View>
 
-        <Animated.Text style={[styles.wordmark, wordStyle]} maxFontSizeMultiplier={1.25}>
+        <Animated.Text
+          style={[
+            styles.wordmark,
+            {
+              opacity: word,
+              transform: [
+                { translateY: word.interpolate({ inputRange: [0, 1], outputRange: [16, 0] }) },
+              ],
+            },
+          ]}
+          maxFontSizeMultiplier={1.25}
+        >
           TriaCare
         </Animated.Text>
 
-        <Animated.Text style={[styles.tagline, subStyle]} maxFontSizeMultiplier={1.35}>
+        <Animated.Text
+          style={[styles.tagline, { opacity: word.interpolate({ inputRange: [0, 1], outputRange: [0, 0.82] }) }]}
+          maxFontSizeMultiplier={1.35}
+        >
           {tagline}
         </Animated.Text>
-
-        {/* Indeterminate sweep. Reads as "working" without the stuck-spinner
-            connotation, and collapses to a static rule under reduce-motion. */}
-        <View
-          style={styles.track}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          {reduceMotion ? (
-            <View style={[styles.sweep, styles.sweepStatic]} />
-          ) : (
-            <Animated.View style={[styles.sweep, barStyle]} />
-          )}
-        </View>
       </View>
 
       <Text style={styles.footer} maxFontSizeMultiplier={1.25}>
@@ -313,62 +345,39 @@ export default function AppSplash({ tagline = 'Health Early Warning System' }) {
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   stage: { alignItems: 'center' },
-  markArea: { alignItems: 'center', justifyContent: 'center' },
-  ripple: {
+  node: {
     position: 'absolute',
-    borderWidth: 1.5,
-    borderColor: '#FFFFFF',
-  },
-  tile: {
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.28)',
-    // Lifts the tile off the gradient; harmless where shadows are unsupported.
     shadowColor: '#1E0A3C',
-    shadowOffset: { width: 0, height: 18 },
-    shadowOpacity: 0.35,
-    shadowRadius: 28,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
   },
   wordmark: {
-    marginTop: 30,
-    fontSize: 36,
+    marginTop: 26,
+    fontSize: 38,
     fontWeight: '800',
     color: '#FFFFFF',
-    letterSpacing: -0.8,
+    letterSpacing: -0.9,
   },
   tagline: {
-    marginTop: 8,
-    fontSize: 13.5,
-    fontWeight: '500',
+    marginTop: 10,
+    fontSize: 12.5,
+    fontWeight: '600',
     color: '#FFFFFF',
-    letterSpacing: 0.2,
+    letterSpacing: 2.4,
+    textTransform: 'uppercase',
   },
-  track: {
-    marginTop: 38,
-    width: 144,
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    overflow: 'hidden',
-    justifyContent: 'center',
-  },
-  sweep: {
-    width: 56,
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: '#FFFFFF',
-  },
-  sweepStatic: { width: '100%', opacity: 0.7 },
   footer: {
     position: 'absolute',
     bottom: 44,
     fontSize: 11.5,
     fontWeight: '500',
     color: '#FFFFFF',
-    opacity: 0.62,
+    opacity: 0.6,
     letterSpacing: 0.4,
   },
 });

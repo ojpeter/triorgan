@@ -161,7 +161,7 @@ describe('startup splash', () => {
 
     expect(screen.getByLabelText('TriaCare is starting')).toBeTruthy();
     expect(screen.getByText('TriaCare')).toBeTruthy();
-    expect(screen.getByText('Health Early Warning System')).toBeTruthy();
+    expect(screen.getByText('Heart · Kidney · Liver')).toBeTruthy();
   });
 
   // Motion sensitivity is a real accessibility need, and a health app is the
