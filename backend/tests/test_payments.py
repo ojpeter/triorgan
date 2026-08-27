@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from helik import gateway
-from helik.store import store
+from corvia import gateway
+from corvia.store import store
 
 from conftest import USER_ID
 

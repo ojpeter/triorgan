@@ -1,1 +1,0 @@
-"""HeLiK backend package."""

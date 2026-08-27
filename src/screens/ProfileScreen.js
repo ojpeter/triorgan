@@ -321,7 +321,7 @@ function StatTile({ label, value, icon }) {
 function AppInfo() {
   return (
     <View style={styles.appInfo}>
-      <Text style={styles.appName}>HeLiK by GOMO Technologies</Text>
+      <Text style={styles.appName}>Corvia by GOMO Technologies</Text>
       <Text style={styles.appVersion}>Version {APP_VERSION}</Text>
       <Text style={styles.appDisclaimer}>
         A screening tool only. It does not diagnose disease. Always consult a qualified

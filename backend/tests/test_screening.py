@@ -4,8 +4,8 @@ from unittest.mock import patch
 
 import pytest
 
-from helik.analysis import AnalysisError
-from helik.store import store
+from corvia.analysis import AnalysisError
+from corvia.store import store
 
 from conftest import JPEG_B64, USER_ID
 
@@ -37,7 +37,7 @@ def types():
 class TestSuccess:
     def test_returns_analysis_and_debits_one_credit(self, client, credited):
         credited(5)
-        with patch("helik.routers.analyse", return_value=VALID_ANALYSIS):
+        with patch("corvia.routers.analyse", return_value=VALID_ANALYSIS):
             response = post(client)
 
         assert response.status_code == 200
@@ -49,7 +49,7 @@ class TestSuccess:
 
     def test_wallet_payload_uses_the_field_names_the_app_reads(self, client, credited):
         credited(1)
-        with patch("helik.routers.analyse", return_value=VALID_ANALYSIS):
+        with patch("corvia.routers.analyse", return_value=VALID_ANALYSIS):
             wallet = post(client).json()["wallet"]
 
         assert set(wallet) == {
@@ -59,7 +59,7 @@ class TestSuccess:
     def test_accepts_attached_photos(self, client, credited):
         credited(1)
         body = {**BODY, "images": [{"symptom_id": "h1", "data": JPEG_B64}]}
-        with patch("helik.routers.analyse", return_value=VALID_ANALYSIS) as analyse:
+        with patch("corvia.routers.analyse", return_value=VALID_ANALYSIS) as analyse:
             assert post(client, body).status_code == 200
 
         assert len(analyse.call_args.args[2]) == 1
@@ -72,7 +72,7 @@ class TestRefunds:
     )
     def test_refunds_the_credit_when_analysis_fails(self, client, credited, reason):
         credited(3)
-        with patch("helik.routers.analyse", side_effect=AnalysisError(reason)):
+        with patch("corvia.routers.analyse", side_effect=AnalysisError(reason)):
             response = post(client)
 
         assert response.status_code == 502
@@ -82,14 +82,14 @@ class TestRefunds:
 
     def test_refunds_on_an_unexpected_bug_too(self, client, credited):
         credited(3)
-        with patch("helik.routers.analyse", side_effect=RuntimeError("boom")):
+        with patch("corvia.routers.analyse", side_effect=RuntimeError("boom")):
             assert post(client).status_code == 502
 
         assert store.wallet(USER_ID).balance_scans == 3
 
     def test_never_leaks_the_internal_reason_to_the_client(self, client, credited):
         credited(1)
-        with patch("helik.routers.analyse", side_effect=AnalysisError("anthropic 429 quota")):
+        with patch("corvia.routers.analyse", side_effect=AnalysisError("anthropic 429 quota")):
             detail = post(client).json()["detail"]
 
         assert "anthropic" not in detail.lower()
@@ -99,7 +99,7 @@ class TestRefunds:
     def test_refunds_when_the_photo_could_not_be_read(self, client, credited):
         credited(2)
         invalid = {"riskLevel": "INVALID", "riskSummary": "Not a human body part."}
-        with patch("helik.routers.analyse", return_value=invalid):
+        with patch("corvia.routers.analyse", return_value=invalid):
             response = post(client)
 
         assert response.status_code == 200
@@ -110,7 +110,7 @@ class TestRefunds:
 
 class TestNoCredit:
     def test_402_when_the_wallet_is_empty(self, client):
-        with patch("helik.routers.analyse") as analyse:
+        with patch("corvia.routers.analyse") as analyse:
             response = post(client)
 
         assert response.status_code == 402
@@ -118,7 +118,7 @@ class TestNoCredit:
 
     def test_does_not_go_negative(self, client, credited):
         credited(1)
-        with patch("helik.routers.analyse", return_value=VALID_ANALYSIS):
+        with patch("corvia.routers.analyse", return_value=VALID_ANALYSIS):
             assert post(client).status_code == 200
             assert post(client).status_code == 402
 

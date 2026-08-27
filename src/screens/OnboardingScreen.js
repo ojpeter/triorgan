@@ -13,14 +13,18 @@ const SLIDES = [
   {
     id: '1', emoji: '🫀',
     title: 'Early Warning\nSaves Lives',
-    subtitle: 'Most heart, kidney and liver diseases are detected too late in Africa. HeLiK puts early detection in your pocket.',
+    subtitle: 'Most heart, kidney and liver diseases are detected too late in Africa. Corvia puts early detection in your pocket.',
     grad: ['#5B21B6', '#7C3AED'], accent: '#DDD6FE',
   },
   {
     id: '2', emoji: '📸',
     title: 'Check Visible\nWarning Signs',
     subtitle: 'Select symptoms you can see on your body — eyelids, nails, skin, palms. Optionally add a photo for better AI analysis.',
-    grad: ['#991B1B', '#DC2626'], accent: '#FECACA',
+    // Golden yellow, reusing the app's existing amber ramp (COLORS.liverGrad2 →
+    // liverGrad1) so onboarding matches the rest of the palette. Deep enough
+    // that the white title and body text stay legible over it — a lighter gold
+    // drops white text below 3:1.
+    grad: ['#92400E', '#D97706'], accent: '#FDE68A',
   },
   {
     id: '3', emoji: '🤖',
@@ -87,7 +91,7 @@ export default function OnboardingScreen({ navigation }) {
             <View style={[styles.circle2, { backgroundColor: item.accent + '18' }]} />
             <View style={styles.slideContent}>
               <View style={[styles.logoPill, { backgroundColor: item.accent + '30' }]}>
-                <Text style={[styles.logoText, { color: item.accent }]}>HeLiK</Text>
+                <Text style={[styles.logoText, { color: item.accent }]}>Corvia</Text>
               </View>
               <View style={[styles.emojiWrapper, { backgroundColor: item.accent + '22' }]}>
                 <Text style={styles.emoji} accessibilityElementsHidden>{item.emoji}</Text>

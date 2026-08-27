@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TriOrgan",
-    "slug": "TriOrgan",
+    "name": "Corvia",
+    "slug": "Corvia",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.odekejp100.TriOrgan",
+      "bundleIdentifier": "com.odekejp100.Corvia",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#7C3AED"
       },
-      "package": "com.odekejp100.TriOrgan"
+      "package": "com.odekejp100.Corvia"
     },
     "web": {
       "favicon": "./assets/favicon.png"

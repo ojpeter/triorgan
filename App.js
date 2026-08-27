@@ -147,7 +147,7 @@ function RootNavigator() {
         <ActivityIndicator
           size="large"
           color={COLORS.primary}
-          accessibilityLabel="Loading HeLiK"
+          accessibilityLabel="Loading Corvia"
         />
       </View>
     );

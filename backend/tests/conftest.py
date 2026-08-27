@@ -14,9 +14,9 @@ os.environ.setdefault("FLUTTERWAVE_SECRET_KEY", "FLWSECK-test")
 os.environ.setdefault("FLUTTERWAVE_WEBHOOK_SECRET", "webhook-secret")
 os.environ.setdefault("PUBLIC_BASE_URL", "https://test.local")
 
-from helik.app import create_app  # noqa: E402
-from helik.auth import CurrentUser  # noqa: E402
-from helik.store import Wallet, store  # noqa: E402
+from corvia.app import create_app  # noqa: E402
+from corvia.auth import CurrentUser  # noqa: E402
+from corvia.store import Wallet, store  # noqa: E402
 
 USER_ID = "user-1"
 USER_EMAIL = "amara@example.com"

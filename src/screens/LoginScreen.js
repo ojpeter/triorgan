@@ -62,10 +62,10 @@ export default function LoginScreen({ navigation }) {
       >
         <View style={styles.brandRow}>
           <View style={styles.brandIcon} accessibilityElementsHidden>
-            <Text style={styles.brandIconText}>H</Text>
+            <Text style={styles.brandIconText}>C</Text>
           </View>
           <View>
-            <Text style={styles.brandName}>HeLiK</Text>
+            <Text style={styles.brandName}>Corvia</Text>
             <Text style={styles.brandSub}>Health Early Warning System</Text>
           </View>
         </View>

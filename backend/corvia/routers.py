@@ -18,7 +18,7 @@ from .auth import CurrentUser, current_user
 from .schemas import AnalyzeRequest, TopUpRequest
 from .store import store
 
-log = logging.getLogger("helik.routers")
+log = logging.getLogger("corvia.routers")
 
 screening_router = APIRouter(tags=["screening"])
 wallet_router = APIRouter(tags=["wallet"])

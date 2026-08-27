@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from helik import analysis
-from helik.analysis import AnalysisError, analyse, build_content, extract_json
+from corvia import analysis
+from corvia.analysis import AnalysisError, analyse, build_content, extract_json
 
 from conftest import JPEG_B64, PNG_B64
 

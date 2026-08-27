@@ -16,9 +16,9 @@ import anthropic
 
 from . import config
 
-log = logging.getLogger("helik.analysis")
+log = logging.getLogger("corvia.analysis")
 
-SYSTEM_PROMPT = """You are HeLiK AI, a medical health screening assistant specialised in early warning detection of heart, kidney and liver disease for East Africa (Uganda).
+SYSTEM_PROMPT = """You are Corvia AI, a medical health screening assistant specialised in early warning detection of heart, kidney and liver disease for East Africa (Uganda).
 
 STEP 1 — IMAGE VALIDATION (only if a photo was provided):
 If an image does NOT show a human body part relevant to the screening (it shows an animal, object, food, scenery, or anything non-human), return exactly this JSON and nothing else:

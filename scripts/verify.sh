@@ -14,7 +14,7 @@ step "Secret scan"
 patterns='sk-ant-[A-Za-z0-9_-]{20}|FLWSECK-[A-Za-z0-9]|sk_live_|AIza[0-9A-Za-z_-]{35}'
 if grep -rIEn "$patterns" --exclude-dir=node_modules --exclude-dir=.git \
      --exclude-dir=.venv --exclude=package-lock.json \
-     src App.js index.js app.config.js backend/helik 2>/dev/null; then
+     src App.js index.js app.config.js backend/corvia 2>/dev/null; then
   bad "a credential is committed — revoke it and move it to the server"
 else
   ok "no credentials in application source"

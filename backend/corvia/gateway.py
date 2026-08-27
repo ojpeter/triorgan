@@ -17,7 +17,7 @@ import httpx
 
 from . import config
 
-log = logging.getLogger("helik.gateway")
+log = logging.getLogger("corvia.gateway")
 
 API_BASE = "https://api.flutterwave.com/v3"
 TIMEOUT = httpx.Timeout(20.0)

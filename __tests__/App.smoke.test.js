@@ -109,7 +109,7 @@ describe('cold start', () => {
 
     await renderApp();
 
-    await waitFor(() => expect(screen.getByText('HeLiK')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Corvia')).toBeTruthy());
     expect(screen.getByText(/Hello, Amara/)).toBeTruthy();
   });
 });
@@ -121,7 +121,7 @@ describe('tab bar', () => {
 
     await renderApp();
 
-    await waitFor(() => expect(screen.getByText('HeLiK')).toBeTruthy());
+    await waitFor(() => expect(screen.getByText('Corvia')).toBeTruthy());
 
     // HistoryScreen was imported but never routed before this work; if it falls
     // out of the navigator again, this fails.

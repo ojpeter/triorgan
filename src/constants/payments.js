@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// HeLiK — Pricing & payment methods. SINGLE SOURCE OF TRUTH.
+// Corvia — Pricing & payment methods. SINGLE SOURCE OF TRUTH.
 //
 // This previously existed three times (paymentService.js, walletService.js and
 // here) with three different package sets and two different balance units, so

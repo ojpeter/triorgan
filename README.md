@@ -1,4 +1,4 @@
-# HeLiK Health App 🫀🫘🟤
+# Corvia Health App 🫀🫘🟤
 
 **Early Warning AI System for Heart, Liver & Kidney Disease**
 
@@ -11,7 +11,7 @@ Built with React Native + Expo | Powered by Claude AI (until custom ML model is 
 ### 1. Install dependencies
 
 ```bash
-cd TriOrgan
+cd Corvia
 npm install
 ```
 
@@ -38,7 +38,7 @@ Scan the QR code with **Expo Go** (Android) or the Camera app (iOS).
 ## Project Structure
 
 ```
-TriOrgan/
+Corvia/
 ├── App.js                          ← Navigation root
 ├── src/
 │   ├── constants/
@@ -98,7 +98,7 @@ export async function analyzeSymptoms({
 
 ## Medical Disclaimer
 
-HeLiK is a **screening tool only**. It does not diagnose disease.
+Corvia is a **screening tool only**. It does not diagnose disease.
 Always consult a qualified healthcare professional for proper medical evaluation.
 
 ---

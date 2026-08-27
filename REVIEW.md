@@ -1,4 +1,4 @@
-# TriOrgan / HeLiK — Technical Review
+# Corvia — Technical Review
 
 > ## ⚠️ STATUS — remediated 2026-08-27
 >
@@ -52,7 +52,7 @@ Good news: `git log` shows **zero commits and no remote**, so the key is not yet
 // src/services/claudeService.js
 import { API_BASE } from './authService';
 export async function analyzeSymptoms({ organ, selectedSymptoms, allSymptoms, imageBase64 }) {
-  const token = await AsyncStorage.getItem('triorgan_token');
+  const token = await AsyncStorage.getItem('corvia_token');
   const res = await fetch(`${API_BASE}/screenings/analyze`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -71,7 +71,7 @@ The backend then owns the key, the system prompt, and the credit check — which
 ### S2 — CRITICAL · Paid access is enforced only on the device
 **Location:** `src/services/paymentService.js:25-99` (wallet lives entirely in AsyncStorage), gate at `src/screens/DetectionScreen.js:118-130`
 
-The scan-credit balance is a JSON blob under the AsyncStorage key `triorgan_wallet_<userId>`, written by the client and never validated anywhere. `hasScansAvailable()` and `deductScanCredit()` both read and write that blob locally. `topUpWallet()` (`paymentService.js:60-80`) does not call a payment gateway at all — it `await`s a 2.2-second `setTimeout` and then credits the wallet:
+The scan-credit balance is a JSON blob under the AsyncStorage key `corvia_wallet_<userId>`, written by the client and never validated anywhere. `hasScansAvailable()` and `deductScanCredit()` both read and write that blob locally. `topUpWallet()` (`paymentService.js:60-80`) does not call a payment gateway at all — it `await`s a 2.2-second `setTimeout` and then credits the wallet:
 
 ```js
 export async function topUpWallet({ userId, packageId, ... }) {
@@ -229,8 +229,8 @@ Three modules define the wallet and its prices, and they disagree:
 
 | | storage key | balance unit | 1-scan price | packages |
 |---|---|---|---|---|
-| `paymentService.js:21,30` | `triorgan_wallet_<uid>` (per user) | **scans** (`balanceScans`) | UGX 500 / $0.50 | 1/5/10/20 |
-| `walletService.js:10,40` | `triorgan_wallet` (global) | **dollars** (`balance`) | $0.50 | 2/6/12/30 |
+| `paymentService.js:21,30` | `corvia_wallet_<uid>` (per user) | **scans** (`balanceScans`) | UGX 500 / $0.50 | 1/5/10/20 |
+| `walletService.js:10,40` | `corvia_wallet` (global) | **dollars** (`balance`) | $0.50 | 2/6/12/30 |
 | `constants/payments.js:5` | — | — | UGX 500 / $0.50 | 3/10/30 |
 
 `DetectionScreen`, `WalletScreen`, `ProfileScreen` and `PaymentModal` use the first. `PaymentScreen` uses the third for prices and the (missing) second for credits. `walletService.js` is imported by nothing at all — including its `refundScan()` (`walletService.js:97`), which is the exact function C3 below needs.

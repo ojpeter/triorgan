@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 from fastapi import HTTPException
 
-from helik import config
-from helik.routers import _debit_one, _refund_one
-from helik.store import Wallet, store
+from corvia import config
+from corvia.routers import _debit_one, _refund_one
+from corvia.store import Wallet, store
 
 from conftest import USER_ID
 
