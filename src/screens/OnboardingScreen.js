@@ -13,7 +13,7 @@ const SLIDES = [
   {
     id: '1', emoji: '🫀',
     title: 'Early Warning\nSaves Lives',
-    subtitle: 'Most heart, kidney and liver diseases are detected too late in Africa. Corvia puts early detection in your pocket.',
+    subtitle: 'Most heart, kidney and liver diseases are detected too late in Africa. TriaCare puts early detection in your pocket.',
     grad: ['#5B21B6', '#7C3AED'], accent: '#DDD6FE',
   },
   {
@@ -91,7 +91,7 @@ export default function OnboardingScreen({ navigation }) {
             <View style={[styles.circle2, { backgroundColor: item.accent + '18' }]} />
             <View style={styles.slideContent}>
               <View style={[styles.logoPill, { backgroundColor: item.accent + '30' }]}>
-                <Text style={[styles.logoText, { color: item.accent }]}>Corvia</Text>
+                <Text style={[styles.logoText, { color: item.accent }]}>TriaCare</Text>
               </View>
               <View style={[styles.emojiWrapper, { backgroundColor: item.accent + '22' }]}>
                 <Text style={styles.emoji} accessibilityElementsHidden>{item.emoji}</Text>

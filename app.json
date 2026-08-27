@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Corvia",
-    "slug": "Corvia",
+    "name": "TriaCare",
+    "slug": "TriaCare",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,7 +13,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.odekejp100.Corvia",
+      "bundleIdentifier": "com.odekejp100.TriaCare",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -23,7 +23,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#7C3AED"
       },
-      "package": "com.odekejp100.Corvia"
+      "package": "com.odekejp100.TriaCare"
     },
     "web": {
       "favicon": "./assets/favicon.png"

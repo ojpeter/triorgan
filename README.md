@@ -1,4 +1,4 @@
-# Corvia Health App 🫀🫘🟤
+# TriaCare Health App 🫀🫘🟤
 
 **Early Warning AI System for Heart, Liver & Kidney Disease**
 
@@ -11,7 +11,7 @@ Built with React Native + Expo | Powered by Claude AI (until custom ML model is 
 ### 1. Install dependencies
 
 ```bash
-cd Corvia
+cd TriaCare
 npm install
 ```
 
@@ -38,7 +38,7 @@ Scan the QR code with **Expo Go** (Android) or the Camera app (iOS).
 ## Project Structure
 
 ```
-Corvia/
+TriaCare/
 ├── App.js                          ← Navigation root
 ├── src/
 │   ├── constants/
@@ -98,7 +98,7 @@ export async function analyzeSymptoms({
 
 ## Medical Disclaimer
 
-Corvia is a **screening tool only**. It does not diagnose disease.
+TriaCare is a **screening tool only**. It does not diagnose disease.
 Always consult a qualified healthcare professional for proper medical evaluation.
 
 ---

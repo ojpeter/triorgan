@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Corvia — Authentication.
+// TriaCare — Authentication.
 //
 // The API base URL now comes from app.config.js (see src/config/env.js) rather
 // than a hand-edited constant, so a release build cannot ship pointing at a

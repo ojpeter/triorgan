@@ -9,9 +9,9 @@ from pathlib import Path
 import pytest
 from fastapi import HTTPException
 
-from corvia import config
-from corvia.routers import _debit_one, _refund_one
-from corvia.store import Wallet, store
+from triacare import config
+from triacare.routers import _debit_one, _refund_one
+from triacare.store import Wallet, store
 
 from conftest import USER_ID
 

@@ -75,7 +75,7 @@ export default function HomeScreen({ navigation }) {
               {firstName ? `Hello, ${firstName} 👋` : `Good ${greeting()} 👋`}
             </Text>
             <Text style={styles.brand} accessibilityRole="header">
-              Corvia
+              TriaCare
             </Text>
             <Text style={styles.brandSub}>Health Early Warning System</Text>
           </View>
@@ -174,7 +174,7 @@ export default function HomeScreen({ navigation }) {
         <View style={styles.disclaimer} accessible>
           <Ionicons name="information-circle-outline" size={18} color={COLORS.textMuted} />
           <Text style={styles.disclaimerText}>
-            Corvia is a screening tool only. It does not diagnose disease. Always consult a
+            TriaCare is a screening tool only. It does not diagnose disease. Always consult a
             qualified healthcare professional for proper medical evaluation.
           </Text>
         </View>

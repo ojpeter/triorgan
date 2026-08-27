@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Corvia — Wallet & payments.
+// TriaCare — Wallet & payments.
 //
 // The server is the source of truth for the balance. The client holds a display
 // copy only (see WalletContext). Credits are debited server-side inside the

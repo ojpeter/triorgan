@@ -45,9 +45,9 @@ class Settings:
     @property
     def model(self) -> str:
         # Claude Opus 5 — the strongest current model, which matters on a task
-        # whose output becomes health guidance. Set CORVIA_MODEL=claude-sonnet-5
+        # whose output becomes health guidance. Set TRIACARE_MODEL=claude-sonnet-5
         # if per-screening cost dominates.
-        return os.environ.get("CORVIA_MODEL", "claude-opus-5")
+        return os.environ.get("TRIACARE_MODEL", "claude-opus-5")
 
 
 settings = Settings()

@@ -147,7 +147,7 @@ function RootNavigator() {
         <ActivityIndicator
           size="large"
           color={COLORS.primary}
-          accessibilityLabel="Loading Corvia"
+          accessibilityLabel="Loading TriaCare"
         />
       </View>
     );

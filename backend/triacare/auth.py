@@ -1,6 +1,6 @@
 """Authentication dependency.
 
-REPLACE the body of `current_user` with the dependency the existing Corvia
+REPLACE the body of `current_user` with the dependency the existing TriaCare
 backend already uses for /auth/*. Everything in this service is authenticated —
 an unauthenticated screening endpoint is an open proxy to your Anthropic account.
 """
@@ -33,6 +33,6 @@ async def current_user(request: Request) -> CurrentUser:
         status_code=status.HTTP_501_NOT_IMPLEMENTED,
         detail=(
             "Authentication is not wired up. Set app.state.user_resolver, or "
-            "replace corvia.auth.current_user with the existing /auth dependency."
+            "replace triacare.auth.current_user with the existing /auth dependency."
         ),
     )

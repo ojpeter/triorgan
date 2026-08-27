@@ -29,7 +29,7 @@ jobs:
           if grep -rIEn "$patterns" \
                --exclude-dir=node_modules --exclude-dir=.git \
                --exclude-dir=.venv --exclude=package-lock.json \
-               src App.js index.js app.config.js backend/corvia 2>/dev/null; then
+               src App.js index.js app.config.js backend/triacare 2>/dev/null; then
             echo "::error::A credential appears to be committed. Revoke it, then move it to the server environment."
             exit 1
           fi

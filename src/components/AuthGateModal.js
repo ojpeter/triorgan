@@ -33,8 +33,8 @@ export default function AuthGateModal({
   const insets = useSafeAreaInsets();
 
   const description = organName
-    ? `To run a ${organName} screening and save your results, you need a free Corvia account.`
-    : `To use ${feature}, you need a free Corvia account. It takes less than a minute.`;
+    ? `To run a ${organName} screening and save your results, you need a free TriaCare account.`
+    : `To use ${feature}, you need a free TriaCare account. It takes less than a minute.`;
 
   return (
     <Modal

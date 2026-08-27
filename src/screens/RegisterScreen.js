@@ -101,7 +101,7 @@ export default function RegisterScreen({ navigation }) {
         <Text style={styles.heroTitle} accessibilityRole="header">
           Create account 🎉
         </Text>
-        <Text style={styles.heroSub}>Join Corvia and take control of your health</Text>
+        <Text style={styles.heroSub}>Join TriaCare and take control of your health</Text>
       </LinearGradient>
 
       <ScrollView

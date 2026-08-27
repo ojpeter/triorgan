@@ -4,7 +4,7 @@ The app no longer holds the Anthropic API key or the scan-credit balance. Both
 now live on the server. This document is the contract the app expects.
 
 A working implementation of every endpoint below is in [`backend/`](backend/) —
-three FastAPI routers you can mount on the existing Corvia backend that already
+three FastAPI routers you can mount on the existing TriaCare backend that already
 serves `/auth/*`. It ships with **69 tests** (`cd backend && python -m pytest`)
 covering the refund invariant, webhook signature verification, idempotent
 crediting and concurrent-debit safety. See [`backend/README.md`](backend/README.md)
@@ -12,9 +12,9 @@ to run it.
 
 Two things still need your input before it can take a real payment:
 
-1. **Auth** — replace `corvia/auth.py`'s `current_user` with the JWT dependency
+1. **Auth** — replace `triacare/auth.py`'s `current_user` with the JWT dependency
    your `/auth/*` routes already use. It returns 501 until you do.
-2. **Storage** — `corvia/store.py` is in-memory. Swap it for your database,
+2. **Storage** — `triacare/store.py` is in-memory. Swap it for your database,
    preserving the per-user locking and the idempotent credit.
 
 ---

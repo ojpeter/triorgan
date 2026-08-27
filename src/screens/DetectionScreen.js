@@ -75,7 +75,7 @@ export default function DetectionScreen({ route, navigation }) {
       if (!permission.granted) {
         Alert.alert(
           source === 'camera' ? 'Camera access needed' : 'Photo access needed',
-          'Corvia needs this permission to attach a photo to your screening. You can enable it in your device Settings.'
+          'TriaCare needs this permission to attach a photo to your screening. You can enable it in your device Settings.'
         );
         return;
       }

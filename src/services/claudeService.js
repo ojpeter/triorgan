@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Corvia — AI screening service.
+// TriaCare — AI screening service.
 //
 // SECURITY: this file used to hold a live Anthropic API key as a string literal
 // and call api.anthropic.com directly from the device. React Native has no

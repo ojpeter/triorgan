@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from corvia import gateway
-from corvia.store import store
+from triacare import gateway
+from triacare.store import store
 
 from conftest import USER_ID
 
